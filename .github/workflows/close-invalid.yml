@@ -1,6 +1,6 @@
 name: Close issue/PR on adding invalid label
 
-# **What it does**: This action closes issues and PRs that are labeled as invalid in the repo.
+# **What it does**: This action closes invalid issues and signals invalid PRs to a trusted writer.
 
 on:
   issues:
@@ -33,8 +33,10 @@ jobs:
       github.event_name == 'pull_request' &&
       github.event.label.name == 'invalid'
     runs-on: ubuntu-latest
-    permissions:
-      pull-requests: read
+    permissions: {}
     steps:
       - name: Record invalid PR label signal
-        run: echo "Invalid label signal for PR #${{ github.event.pull_request.number }}"
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "Invalid label signal for PR #$PR_NUMBER"
