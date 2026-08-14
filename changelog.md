@@ -1,3 +1,7 @@
+## 1.0.80 - 2026-08-14
+
+- Update model configurations
+
 ## 1.0.79 - 2026-08-10
 
 - The /sandbox configuration dialog shows where sandbox settings are stored in settings.json
