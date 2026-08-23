@@ -98,7 +98,7 @@ jobs:
 
   reconcile-invalid-prs:
     if: >
-      github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+      (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
