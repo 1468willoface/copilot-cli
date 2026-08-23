@@ -13,7 +13,6 @@ permissions: {}
 jobs:
   close-issue-on-adding-invalid-label:
     if: >
-      github.repository == 'github/copilot-cli' &&
       github.event_name == 'issues' &&
       github.event.label.name == 'invalid'
     runs-on: ubuntu-latest
@@ -29,7 +28,6 @@ jobs:
 
   signal-invalid-pr-label:
     if: >
-      github.repository == 'github/copilot-cli' &&
       github.event_name == 'pull_request' &&
       github.event.label.name == 'invalid'
     runs-on: ubuntu-latest
