@@ -14,7 +14,6 @@ permissions: {}
 jobs:
   close-invalid-pr-from-workflow-run:
     if: >
-      github.repository == 'github/copilot-cli' &&
       github.event_name == 'workflow_run' &&
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.repository.full_name == github.repository
@@ -72,7 +71,6 @@ jobs:
 
   reconcile-invalid-prs:
     if: >
-      github.repository == 'github/copilot-cli' &&
       (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
