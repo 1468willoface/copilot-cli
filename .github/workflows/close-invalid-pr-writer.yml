@@ -33,8 +33,29 @@ jobs:
         run: |
           set -euo pipefail
 
-          trusted_workflow_id="$(gh api "repos/$GH_REPO/actions/workflows/close-invalid.yml" --jq .id)"
-          workflow_run="$(gh api "repos/$GH_REPO/actions/runs/$WORKFLOW_RUN_ID")"
+          gh_api() {
+            local attempt=1
+            local max_attempts=3
+            local delay=2
+
+            while true; do
+              if gh api "$@"; then
+                return 0
+              fi
+
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "gh api failed after $attempt attempts: $*"
+                return 1
+              fi
+
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          trusted_workflow_id="$(gh_api "repos/$GH_REPO/actions/workflows/close-invalid.yml" --jq .id)"
+          workflow_run="$(gh_api "repos/$GH_REPO/actions/runs/$WORKFLOW_RUN_ID")"
 
           if [ "$(jq -r .workflow_id <<<"$workflow_run")" != "$trusted_workflow_id" ] ||
             [ "$(jq -r .event <<<"$workflow_run")" != "pull_request" ] ||
@@ -51,7 +72,7 @@ jobs:
           pr_number="$(jq -r .pull_requests[0].number <<<"$workflow_run")"
           run_head_sha="$(jq -r .head_sha <<<"$workflow_run")"
           run_head_repo="$(jq -r '.head_repository.full_name // empty' <<<"$workflow_run")"
-          pr="$(gh api "repos/$GH_REPO/pulls/$pr_number")"
+          pr="$(gh_api "repos/$GH_REPO/pulls/$pr_number")"
 
           if [ -z "$run_head_repo" ] ||
             [ "$(jq -r .base.repo.full_name <<<"$pr")" != "$GH_REPO" ] ||
@@ -67,7 +88,7 @@ jobs:
             exit 0
           fi
 
-          gh api -X PATCH "repos/$GH_REPO/pulls/$pr_number" -f state=closed
+          gh_api -X PATCH "repos/$GH_REPO/pulls/$pr_number" -f state=closed
 
   reconcile-invalid-prs:
     if: >
@@ -86,13 +107,34 @@ jobs:
         run: |
           set -euo pipefail
 
-          gh api --paginate "repos/$GH_REPO/pulls?state=open&per_page=100" \
+          gh_api() {
+            local attempt=1
+            local max_attempts=3
+            local delay=2
+
+            while true; do
+              if gh api "$@"; then
+                return 0
+              fi
+
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "gh api failed after $attempt attempts: $*"
+                return 1
+              fi
+
+              sleep "$delay"
+              attempt=$((attempt + 1))
+              delay=$((delay * 2))
+            done
+          }
+
+          gh_api --paginate "repos/$GH_REPO/pulls?state=open&per_page=100" \
             --jq '.[] | select(any(.labels[]?; .name == "invalid")) | .number' |
             while read -r pr_number; do
-              pr="$(gh api "repos/$GH_REPO/pulls/$pr_number")"
+              pr="$(gh_api "repos/$GH_REPO/pulls/$pr_number")"
 
               if [ "$(jq -r .state <<<"$pr")" = "open" ] &&
                 jq -e 'any(.labels[]?; .name == "invalid")' >/dev/null <<<"$pr"; then
-                gh api -X PATCH "repos/$GH_REPO/pulls/$pr_number" -f state=closed
+                gh_api -X PATCH "repos/$GH_REPO/pulls/$pr_number" -f state=closed
               fi
             done
