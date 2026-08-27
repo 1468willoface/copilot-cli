@@ -2,7 +2,7 @@ name: Retry failed Copilot cloud agent run
 
 on:
   workflow_run:
-    workflows: [Copilot cloud agent]
+    workflows: [Running Copilot cloud agent]
     types: [completed]
 
 permissions: {}
